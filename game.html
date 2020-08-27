@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Sudoku Game</title>
+    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <!-- latest -->
+    <link href="https://unpkg.com/nes.css@latest/css/nes.min.css" rel="stylesheet" />
+    <!-- core style only -->
+    <link href="https://unpkg.com/nes.css/css/nes-core.min.css" rel="stylesheet" />
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/grid.css" />
+</head>
+
+<body>
+
+    
+
+    <div class="container">
+       
+        <span id='welcomeMsg'class="nes-text is-primary">Welcome to Sudoku !</span><br>
+        <button id='resetButton' type="button" class="nes-btn is-primary" onclick="resetGame()">New Game</button>
+        <div id='difficulty'>
+            <label for="dark_select" style="color:#fff">Difficulty Level</label>
+            <div class="nes-select">
+              <select id="level"required id="dark_select" onchange="changeDifficultyLevel()">
+                <option value="0" selected >Easy</option>
+                <option value="1">Medium</option>
+                <option value="2">hard</option>
+              </select>
+            </div>
+        </div>
+
+        <div class="nes-text is-primary" id="stopwatch" >
+          <p id="countdown2"></p>
+        </div>
+        <div id='userGrid'>
+          <table id="grid"></table>
+        </div>
+        <div id='score'>
+          <p style="font-size: 25px;">Leader Board</p>
+          <ol id="scoreBoard"></ol>
+        </div>
+        <div id='rules-container' class="nes-container is-rounded with-title is-centered">
+            <p class="title" id='rules'>How to play Sudoku</p>
+            <p id='rules'>The goal of Sudoku is to fill in a 9×9 grid with digits so that each column, row, and 3×3 section contain the numbers between 1 to 9. At the beginning of the game, the 9×9 grid will have some of the squares filled in. Your job is to use logic to fill in the missing digits and complete the grid</p>
+            <div id='rules' class="lists">
+                <ul class="nes-list is-disc">
+                  <li>Any row contains more than one of the same number from 1 to 9</li>
+                  <li>Any column contains more than one of the same number from 1 to 9</li>
+                  <li>Any 3×3 grid contains more than one of the same number from 1 to 9</li>
+                </ul>
+              </div>
+        </div>
+          
+
+        
+
+    </div>
+
+</body>
+<script src="static/js/game.js"></script>
+<script src="static/js/timer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+
+
+</html>
+
+
