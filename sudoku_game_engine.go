@@ -2,22 +2,38 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
-var sudokuGrid [9][9]int                              //Array for Storing Values in cells
-var replicatedGrid [9][9]int                          //Replica of Original Grid Before removing values
-var gridSize int = 9                                  //Size of Sudoku Puzzle
-var blockSize int = int(math.Sqrt(float64(gridSize))) //Size of a block
+type Sudoku struct {
+	sudokuGrid      [9][9]int //Array for Storing Values in cells
+	replicatedGrid  [9][9]int //Replica of Original Grid Before removing values
+	answerGrid      [9][9]int
+	difficultyLevel map[string]int
+	//gridSize int = 9                                  //Size of Sudoku Puzzle
+	//blockSize int = int(math.Sqrt(float64(gridSize)) //Size of a block
+	gridSize  int
+	blockSize int
+	gameLevel string
+}
+
+func (s *Sudoku) initializeGame(puzzleSize int, subBoxSize int, level string) {
+	s.gridSize = puzzleSize
+	s.blockSize = subBoxSize
+	s.gameLevel = level
+}
 
 // Constant Values for Setting Levels
-const (
-	low = iota
-	medium
-	high
-)
+func (s *Sudoku) setKValue() {
+	s.difficultyLevel = make(map[string]int)
+	var key string
+	for i := 0; i < 3; i++ {
+		key = strconv.Itoa(i)
+		s.difficultyLevel[key] = int(s.gridSize * 2 * (i + 1))
+	}
+}
 
 // Function For Generating Random Values
 func randomValueGenerator(upperLimit int) (RandomInt int) {
@@ -29,13 +45,13 @@ func randomValueGenerator(upperLimit int) (RandomInt int) {
 }
 
 // Function for Generating Puzzle
-func createPuzzle() {
+func (s *Sudoku) createPuzzle(gameLevel string) {
 
-	fillDiagonalBoxes()                                //Fill Diagonal Blocks
-	fillRemainingCells(0, blockSize-1)                 //Fill Reamining Cells
-	replicatedGrid = replicateOriginalGrid(sudokuGrid) //Copy Unaltered Grid in New Grid
-	removeKCells(high)                                 //Remove Cells form Grid Based on Difficulty of Game
-
+	s.fillDiagonalBoxes()                                  //Fill Diagonal Blocks
+	s.fillRemainingCells(0, s.blockSize-1)                 //Fill Reamining Cells
+	s.replicatedGrid = replicateOriginalGrid(s.sudokuGrid) //Copy Unaltered Grid in New Grid
+	s.setKValue()                                          //Set K values in map
+	s.removeKCells(gameLevel)                              //Remove Cells form Grid Based on Difficulty of Game
 }
 
 // Function for Replicating Winning Puzzle i.e Original Grid Before Removing Cell Values
@@ -45,88 +61,81 @@ func replicateOriginalGrid(sudokuGrid [9][9]int) (temporaryGrid [9][9]int) {
 }
 
 // Function to fill Boxes in Diagonal (Based on fact that Diagonal Boxes are Independent)
-func fillDiagonalBoxes() {
-	for i := 0; i < gridSize; i = i + blockSize {
-		fillIndividualBox(i, i)
+func (s *Sudoku) fillDiagonalBoxes() {
+	for i := 0; i < s.gridSize; i = i + s.blockSize {
+		s.fillIndividualBox(i, i)
 	}
 }
 
 // Function for Filling Individual Box
-func fillIndividualBox(row int, col int) {
+func (s *Sudoku) fillIndividualBox(row int, col int) {
 	var num int
-	for i := 0; i < blockSize; i++ {
-		for j := 0; j < blockSize; j++ {
+	for i := 0; i < s.blockSize; i++ {
+		for j := 0; j < s.blockSize; j++ {
 			for {
-				num = randomValueGenerator(gridSize)
-				if uniqueBoxValidation(row, col, num) {
+				num = randomValueGenerator(s.gridSize)
+				if s.uniqueBoxValidation(row, col, num) {
 					break
 				}
 			}
-			sudokuGrid[row+i][col+j] = num
+			s.sudokuGrid[row+i][col+j] = num
 		}
 	}
 }
 
 // Function for Filling Remaining Cells in the Puzzle i.e Other than Diagonal Boxes
-func fillRemainingCells(i int, j int) bool {
+func (s *Sudoku) fillRemainingCells(i int, j int) bool {
 
-	if j >= gridSize && i < (gridSize-1) {
+	if j >= s.gridSize && i < (s.gridSize-1) {
 		i = i + 1
 		j = 0
 	}
-	if i >= gridSize && j >= gridSize {
+	if i >= s.gridSize && j >= s.gridSize {
 		return true
 	}
-	if i < blockSize {
-		if j < blockSize {
-			j = blockSize
+	if i < s.blockSize {
+		if j < s.blockSize {
+			j = s.blockSize
 		}
-	} else if i < (gridSize - blockSize) {
-		if j == int(i/blockSize)*blockSize {
-			j = j + blockSize
+	} else if i < (s.gridSize - s.blockSize) {
+		if j == int(i/s.blockSize)*s.blockSize {
+			j = j + s.blockSize
 		}
 	} else {
-		if j == (gridSize - blockSize) {
+		if j == (s.gridSize - s.blockSize) {
 			i = i + 1
 			j = 0
-			if i >= gridSize {
+			if i >= s.gridSize {
 				return true
 			}
 		}
 	}
 
-	for num := 1; num <= gridSize; num++ {
-		if uniqueValidation(i, j, num) {
-			sudokuGrid[i][j] = num
-			if fillRemainingCells(i, j+1) {
+	for num := 1; num <= s.gridSize; num++ {
+		if s.uniqueValidation(i, j, num) {
+			s.sudokuGrid[i][j] = num
+			if s.fillRemainingCells(i, j+1) {
 				return true
 			}
-			sudokuGrid[i][j] = 0
+			s.sudokuGrid[i][j] = 0
 		}
 	}
 	return false
 }
 
 //Function for removing K-values from grid based on difficulty Level
-func removeKCells(difficultyLevel int) {
-	var count int
-	if difficultyLevel == low {
-		count = 15
-	} else if difficultyLevel == medium {
-		count = 25
-	} else {
-		count = 40
-	}
-
+func (s *Sudoku) removeKCells(gameLevel string) {
+	var count int = s.difficultyLevel[gameLevel]
+	fmt.Println(gameLevel)
 	for {
-		var cellID = randomValueGenerator(gridSize*gridSize - 1)
+		var cellID = randomValueGenerator(s.gridSize*s.gridSize - 1)
 
-		i := (cellID / gridSize)
-		j := (cellID % gridSize)
+		i := (cellID / s.gridSize)
+		j := (cellID % s.gridSize)
 
-		if sudokuGrid[i][j] != 0 {
+		if s.sudokuGrid[i][j] != 0 {
 			count = count - 1
-			sudokuGrid[i][j] = 0
+			s.sudokuGrid[i][j] = 0
 		}
 		if count == 0 {
 			break
@@ -135,10 +144,10 @@ func removeKCells(difficultyLevel int) {
 }
 
 // Function for Validating uniqueness of element in block
-func uniqueBoxValidation(rowStart int, colStart int, num int) bool {
-	for i := 0; i < blockSize; i++ {
-		for j := 0; j < blockSize; j++ {
-			if sudokuGrid[rowStart+i][colStart+j] == num {
+func (s *Sudoku) uniqueBoxValidation(rowStart int, colStart int, num int) bool {
+	for i := 0; i < s.blockSize; i++ {
+		for j := 0; j < s.blockSize; j++ {
+			if s.sudokuGrid[rowStart+i][colStart+j] == num {
 				return false
 			}
 		}
@@ -147,9 +156,9 @@ func uniqueBoxValidation(rowStart int, colStart int, num int) bool {
 }
 
 // Functiom for Validating Uniqueness of Element in Row
-func uniqueRowValidation(i int, num int) bool {
-	for j := 0; j < gridSize; j++ {
-		if sudokuGrid[i][j] == num {
+func (s *Sudoku) uniqueRowValidation(i int, num int) bool {
+	for j := 0; j < s.gridSize; j++ {
+		if s.sudokuGrid[i][j] == num {
 			return false
 		}
 	}
@@ -157,9 +166,9 @@ func uniqueRowValidation(i int, num int) bool {
 }
 
 // Functiom for Validating Uniqueness of Element in Column
-func uniqueColValidation(j int, num int) bool {
-	for i := 0; i < gridSize; i++ {
-		if sudokuGrid[i][j] == num {
+func (s *Sudoku) uniqueColValidation(j int, num int) bool {
+	for i := 0; i < s.gridSize; i++ {
+		if s.sudokuGrid[i][j] == num {
 			return false
 		}
 	}
@@ -167,32 +176,22 @@ func uniqueColValidation(j int, num int) bool {
 }
 
 // Functiom for Validating Uniqueness of Element in Row, Column and Box
-func uniqueValidation(i int, j int, num int) bool {
-	status := (uniqueRowValidation(i, num) && uniqueColValidation(j, num) && uniqueBoxValidation(i-(i%blockSize), j-(j%blockSize), num))
+func (s *Sudoku) uniqueValidation(i int, j int, num int) bool {
+	status := (s.uniqueRowValidation(i, num) && s.uniqueColValidation(j, num) && s.uniqueBoxValidation(i-(i%s.blockSize), j-(j%s.blockSize), num))
 	return status
 }
 
 // Function for Printing Puzzle Grid on Terminal
-func printSudoku(sudokuGrid [9][9]int) {
-	for i := 0; i < gridSize; i++ {
-		for j := 0; j < gridSize; j++ {
-			if sudokuGrid[i][j] > 9 {
-				fmt.Print(sudokuGrid[i][j], "|")
+func (s *Sudoku) printSudoku(sudokuGrid [9][9]int) {
+	for i := 0; i < s.gridSize; i++ {
+		for j := 0; j < s.gridSize; j++ {
+			if s.sudokuGrid[i][j] > 9 {
+				fmt.Print(s.sudokuGrid[i][j], "|")
 			} else {
-				fmt.Print(sudokuGrid[i][j], " |")
+				fmt.Print(s.sudokuGrid[i][j], " |")
 			}
 		}
 		fmt.Println()
 	}
 	fmt.Println()
-}
-
-func main() {
-
-	fmt.Println("Welcome To Sudoku Puzzle")
-	createPuzzle()
-	printSudoku(sudokuGrid)
-	fmt.Println("----------------------------------")
-	printSudoku(replicatedGrid)
-	userDisplay()
 }
